@@ -39,14 +39,21 @@
  */
 package org.glassfish.jersey.examples.helloworld.spring;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import java.util.logging.Logger;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
+
+import jersey.repackaged.com.google.common.util.concurrent.ThreadFactoryBuilder;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Jersey2 Spring integration example.
@@ -55,6 +62,7 @@ import java.util.logging.Logger;
  * @author Marko Asplund (marko.asplund at gmail.com)
  */
 @Path("jersey-hello")
+@Component
 public class JerseyResource {
     private static final Logger LOGGER = Logger.getLogger(JerseyResource.class.getName());
 
@@ -69,10 +77,34 @@ public class JerseyResource {
         LOGGER.fine("HelloWorldResource()");
     }
 
-    @GET
+/*    @GET
     @Produces(MediaType.TEXT_PLAIN)
     public String getHello() {
         return String.format("%s: %s", timeService.getDateTime(), greetingService.greet("world"));
     }
+*/
+    
+    public static final String NOTIFICATION_RESPONSE = "Hello async world!";
+    //
+    private static final int SLEEP_TIME_IN_MILLIS = 1000;
+    private static final ExecutorService TASK_EXECUTOR = Executors.newCachedThreadPool(
+            new ThreadFactoryBuilder().setNameFormat("long-running-resource-executor-%d").build());
 
+    
+    @GET
+    public void longGet(@Suspended final AsyncResponse ar) {
+        TASK_EXECUTOR.submit(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(SLEEP_TIME_IN_MILLIS);
+                } catch (InterruptedException ex) {
+                    LOGGER.log(Level.SEVERE, "Response processing interrupted", ex);
+                }
+                ar.resume(NOTIFICATION_RESPONSE);
+            }
+        });
+    }
+    
 }
