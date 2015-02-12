@@ -86,7 +86,7 @@ public class JerseyResource {
     
     public static final String NOTIFICATION_RESPONSE = "Hello async world!";
     //
-    private static final int SLEEP_TIME_IN_MILLIS = 1000;
+    private static final int SLEEP_TIME_IN_MILLIS = 4000;
     private static final ExecutorService TASK_EXECUTOR = Executors.newCachedThreadPool(
             new ThreadFactoryBuilder().setNameFormat("long-running-resource-executor-%d").build());
 
